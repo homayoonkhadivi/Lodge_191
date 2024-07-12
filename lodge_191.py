@@ -82,15 +82,17 @@ if not st.session_state.table_data.empty:
     st.dataframe(st.session_state.table_data)
 
     # Allow inline editing
-    st.write("### Click on any cell to edit")
     edited_table = st.session_state.table_data.copy()
     for index, column in enumerate(edited_table.columns):
-        for row_index in range(len(edited_table)):
-            new_value = st.text_input(f"Edit {column} of Row {row_index + 1}",
-                                      value=edited_table.iloc[row_index, index],
-                                      key=f"{column}_{row_index}")
-            if st.button(f"Update {column} of Row {row_index + 1}"):
-                update_row(row_index, column, new_value)
+        if column == 'Lodge Date':
+            for row_index in range(len(edited_table)):
+                new_value = st.text_input(f"Edit {column} of Row {row_index + 1}",
+                                          value=edited_table.iloc[row_index, index],
+                                          key=f"{column}_{row_index}")
+                if st.button(f"Update {column} of Row {row_index + 1}"):
+                    update_row(row_index, column, new_value)
+        else:
+            st.write(edited_table[column])
 
 # Function to export table to HTML
 def export_to_html():
