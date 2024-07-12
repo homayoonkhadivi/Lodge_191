@@ -16,7 +16,12 @@ def init_data_storage():
 def load_data():
     try:
         if os.path.exists(DATA_FILE):
-            return pd.read_csv(DATA_FILE)
+            df = pd.read_csv(DATA_FILE)
+            # Convert Lodge Date to datetime format if it's not already
+            if 'Lodge Date' in df.columns:
+                df['Lodge Date'] = pd.to_datetime(df['Lodge Date'], errors='coerce')
+                df['Lodge Date'] = df['Lodge Date'].dt.strftime("%A, %B %d, %Y")
+            return df
         else:
             st.warning(f"No data found in {DATA_FILE}.")
             return pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Comments"])
@@ -24,15 +29,11 @@ def load_data():
         st.error(f"Error loading data from {DATA_FILE}: {e}")
         return pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Comments"])
 
-# Function to format date with day, month, and year
-def format_lodge_date(date):
-    return date.strftime("%A, %B %d, %Y")  # Example: "Monday, July 12, 2024"
-
 # Function to add a row to the table and save to CSV
 def add_row():
     try:
         lodge_date = st.session_state.lodge_date
-        formatted_date = format_lodge_date(lodge_date)
+        formatted_date = lodge_date.strftime("%A, %B %d, %Y")
         new_row = pd.DataFrame({
             "Name": [st.session_state.name],
             "Occupation": [st.session_state.occupation],
@@ -64,8 +65,6 @@ with st.form(key='input_form'):
 # Display the table with formatted date
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
-    st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'])
-    st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
     st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
