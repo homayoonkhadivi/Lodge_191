@@ -26,7 +26,7 @@ def load_data():
 
 # Function to format date with day, month, and year
 def format_lodge_date(date):
-    return date.strftime("%A, %B %d, %Y")  # Example: "Monday, July 12, 2024"
+    return date.strftime("%d %B, %Y")  # Example: "12 July, 2024"
 
 # Function to add a row to the table and save to CSV
 def add_row():
@@ -64,8 +64,6 @@ with st.form(key='input_form'):
 # Display the table with formatted date
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
-    st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'])
-    st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
     st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
