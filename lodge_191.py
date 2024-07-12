@@ -8,9 +8,10 @@ DATA_FILE = "data.csv"
 
 # Function to initialize data storage
 def init_data_storage():
-    if not os.path.exists(DATA_FILE):
-        df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
-        df.to_csv(DATA_FILE, index=False)
+    if os.path.exists(DATA_FILE):
+        os.remove(DATA_FILE)  # Remove existing file if it exists
+    df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
+    df.to_csv(DATA_FILE, index=False)
 
 # Load data from CSV file with error handling
 def load_data():
@@ -50,6 +51,10 @@ def add_row():
 
 # Add title with emojis
 st.title("191 Lodge List 😊🛂")
+
+# Initialize data storage if necessary
+if not os.path.exists(DATA_FILE):
+    init_data_storage()
 
 # Initialize session state to store table data
 if 'table_data' not in st.session_state:
