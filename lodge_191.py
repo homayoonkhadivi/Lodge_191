@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import os  # Import the os module for file operations
+import os
 
 # File path for storing data
 DATA_FILE = "data.csv"
@@ -12,24 +12,35 @@ def init_data_storage():
         df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Comments"])
         df.to_csv(DATA_FILE, index=False)
 
-# Load data from CSV file
+# Load data from CSV file with error handling
 def load_data():
-    return pd.read_csv(DATA_FILE)
+    try:
+        if os.path.exists(DATA_FILE):
+            return pd.read_csv(DATA_FILE)
+        else:
+            st.warning(f"No data found in {DATA_FILE}.")
+            return pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Comments"])
+    except Exception as e:
+        st.error(f"Error loading data from {DATA_FILE}: {e}")
+        return pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Comments"])
 
 # Function to add a row to the table and save to CSV
 def add_row():
-    # Format the lodge date as "Month, Year"
-    lodge_date = st.session_state.lodge_date.strftime("%B, %Y")
-    new_row = pd.DataFrame({
-        "Name": [st.session_state.name],
-        "Occupation": [st.session_state.occupation],
-        "Lodge Date": [lodge_date],
-        "Comments": [st.session_state.comments]
-    })
-    # Append new row to CSV file
-    new_row.to_csv(DATA_FILE, mode='a', header=not os.path.exists(DATA_FILE), index=False)
-    # Update session state data
-    st.session_state.table_data = load_data()
+    try:
+        # Format the lodge date as "Month, Year"
+        lodge_date = st.session_state.lodge_date.strftime("%B, %Y")
+        new_row = pd.DataFrame({
+            "Name": [st.session_state.name],
+            "Occupation": [st.session_state.occupation],
+            "Lodge Date": [lodge_date],
+            "Comments": [st.session_state.comments]
+        })
+        # Append new row to CSV file
+        new_row.to_csv(DATA_FILE, mode='a', header=not os.path.exists(DATA_FILE), index=False)
+        # Update session state data
+        st.session_state.table_data = load_data()
+    except Exception as e:
+        st.error(f"Error adding row to {DATA_FILE}: {e}")
 
 # Add title with emojis
 st.title("191 Lodge List 😊🛂")
