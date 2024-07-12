@@ -16,7 +16,12 @@ def init_data_storage():
 def load_data():
     try:
         if os.path.exists(DATA_FILE):
-            return pd.read_csv(DATA_FILE)
+            df = pd.read_csv(DATA_FILE)
+            # Convert Lodge Date to datetime format if it's not already
+            if 'Lodge Date' in df.columns:
+                df['Lodge Date'] = pd.to_datetime(df['Lodge Date'], errors='coerce')
+                df['Lodge Date'] = df['Lodge Date'].dt.strftime("%d %B, %Y")
+            return df
         else:
             st.warning(f"No data found in {DATA_FILE}.")
             return pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Comments"])
