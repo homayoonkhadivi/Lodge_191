@@ -16,7 +16,7 @@ def init_data_storage():
 def load_data():
     try:
         if os.path.exists(DATA_FILE):
-            df = pd.read_csv(DATA_FILE, parse_dates=['Lodge Date'])
+            df = pd.read_csv(DATA_FILE, parse_dates=['Lodge Date', 'Grant Date'])
             return df
         else:
             st.warning(f"No data found in {DATA_FILE}.")
