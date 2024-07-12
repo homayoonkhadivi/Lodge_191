@@ -16,10 +16,10 @@ def init_data_storage():
 def load_data():
     try:
         if os.path.exists(DATA_FILE):
-            df = pd.read_csv(DATA_FILE, parse_dates=['Lodge Date'])
-            if 'Grant Date' not in df.columns:
-                df['Grant Date'] = None
-            else:
+            df = pd.read_csv(DATA_FILE, parse_dates=['Lodge Date', 'Grant Date'])
+            if 'Lodge Date' in df.columns:
+                df['Lodge Date'] = pd.to_datetime(df['Lodge Date'], errors='coerce')
+            if 'Grant Date' in df.columns:
                 df['Grant Date'] = pd.to_datetime(df['Grant Date'], errors='coerce')
             return df
         else:
