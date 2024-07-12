@@ -16,12 +16,7 @@ def init_data_storage():
 def load_data():
     try:
         if os.path.exists(DATA_FILE):
-            df = pd.read_csv(DATA_FILE)
-            # Convert Lodge Date to datetime format if it's not already
-            if 'Lodge Date' in df.columns:
-                df['Lodge Date'] = pd.to_datetime(df['Lodge Date'], errors='coerce')
-                df['Lodge Date'] = df['Lodge Date'].dt.strftime("%d %B, %Y")
-            return df
+            return pd.read_csv(DATA_FILE)
         else:
             st.warning(f"No data found in {DATA_FILE}.")
             return pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Comments"])
@@ -31,7 +26,7 @@ def load_data():
 
 # Function to format date with day, month, and year
 def format_lodge_date(date):
-    return date.strftime("%d %B, %Y")  # Example: "12 July, 2024"
+    return date.strftime("%A, %B %d, %Y")  # Example: "Monday, July 12, 2024"
 
 # Function to add a row to the table and save to CSV
 def add_row():
@@ -51,16 +46,6 @@ def add_row():
     except Exception as e:
         st.error(f"Error adding row to {DATA_FILE}: {e}")
 
-# Function to update a row in the table and save to CSV
-def update_row(index, column, value):
-    try:
-        df = pd.read_csv(DATA_FILE)
-        df.at[index, column] = value
-        df.to_csv(DATA_FILE, index=False)
-        st.session_state.table_data = load_data()
-    except Exception as e:
-        st.error(f"Error updating row in {DATA_FILE}: {e}")
-
 # Add title with emojis
 st.title("191 Lodge List 😊🛂")
 
@@ -79,20 +64,9 @@ with st.form(key='input_form'):
 # Display the table with formatted date
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
+    st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'])
+    st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
     st.dataframe(st.session_state.table_data)
-
-    # Allow inline editing
-    edited_table = st.session_state.table_data.copy()
-    for index, column in enumerate(edited_table.columns):
-        if column == 'Lodge Date':
-            for row_index in range(len(edited_table)):
-                new_value = st.text_input(f"Edit {column} of Row {row_index + 1}",
-                                          value=edited_table.iloc[row_index, index],
-                                          key=f"{column}_{row_index}")
-                if st.button(f"Update {column} of Row {row_index + 1}"):
-                    update_row(row_index, column, new_value)
-        else:
-            st.write(edited_table[column])
 
 # Function to export table to HTML
 def export_to_html():
