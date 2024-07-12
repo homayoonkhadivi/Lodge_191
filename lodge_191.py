@@ -17,7 +17,7 @@ def init_data_storage():
 def load_data():
     try:
         if os.path.exists(DATA_FILE):
-            df = pd.read_csv(DATA_FILE, parse_dates=['Lodge Date', 'Grant Date'])
+            df = pd.read_csv(DATA_FILE, parse_dates=['Lodge Date', 'Grant Date'], infer_datetime_format=True)
             if 'Lodge Date' in df.columns:
                 df['Lodge Date'] = pd.to_datetime(df['Lodge Date'], errors='coerce')
             if 'Grant Date' in df.columns:
