@@ -16,12 +16,7 @@ def init_data_storage():
 def load_data():
     try:
         if os.path.exists(DATA_FILE):
-            df = pd.read_csv(DATA_FILE)
-            # Convert Lodge Date and Grant Date to datetime if columns exist
-            if 'Lodge Date' in df.columns:
-                df['Lodge Date'] = pd.to_datetime(df['Lodge Date'], errors='coerce')
-            if 'Grant Date' in df.columns:
-                df['Grant Date'] = pd.to_datetime(df['Grant Date'], errors='coerce')
+            df = pd.read_csv(DATA_FILE, parse_dates=['Lodge Date', 'Grant Date'])
             return df
         else:
             st.warning(f"No data found in {DATA_FILE}.")
@@ -61,13 +56,17 @@ with st.form(key='input_form'):
     st.text_input("Name", key="name")
     st.text_input("Occupation", key="occupation")
     st.date_input("Lodge Date", key="lodge_date", value=datetime.today())
-    st.date_input("Grant Date", key="grant_date", value=datetime.today())
+    st.date_input("Grant Date", key="grant_date", value=None)
     st.text_area("Comments", key="comments")
     submit_button = st.form_submit_button(label='Add Row', on_click=add_row)
 
 # Display the table
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
+    # Format Lodge Date to day month year
+    st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
+    # Show 'None' for Grant Date if it's NaT (not a valid datetime)
+    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x)
     st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
