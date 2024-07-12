@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import os  # Import the os module for file operations
 
 # File path for storing data
 DATA_FILE = "data.csv"
@@ -10,9 +11,6 @@ def init_data_storage():
     if not os.path.exists(DATA_FILE):
         df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Comments"])
         df.to_csv(DATA_FILE, index=False)
-
-# Initialize data storage
-init_data_storage()
 
 # Load data from CSV file
 def load_data():
