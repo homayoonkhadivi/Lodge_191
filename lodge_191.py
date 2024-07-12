@@ -24,15 +24,19 @@ def load_data():
         st.error(f"Error loading data from {DATA_FILE}: {e}")
         return pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Comments"])
 
+# Function to format date with day, month, and year
+def format_lodge_date(date):
+    return date.strftime("%A, %B %d, %Y")  # Example: "Monday, July 12, 2024"
+
 # Function to add a row to the table and save to CSV
 def add_row():
     try:
-        # Format the lodge date as "Month, Year"
-        lodge_date = st.session_state.lodge_date.strftime("%B, %Y")
+        lodge_date = st.session_state.lodge_date
+        formatted_date = format_lodge_date(lodge_date)
         new_row = pd.DataFrame({
             "Name": [st.session_state.name],
             "Occupation": [st.session_state.occupation],
-            "Lodge Date": [lodge_date],
+            "Lodge Date": [formatted_date],
             "Comments": [st.session_state.comments]
         })
         # Append new row to CSV file
@@ -57,9 +61,12 @@ with st.form(key='input_form'):
     st.text_area("Comments", key="comments")
     submit_button = st.form_submit_button(label='Add Row', on_click=add_row)
 
-# Display the table
+# Display the table with formatted date
 st.write("### Current Table")
-st.dataframe(st.session_state.table_data)
+if not st.session_state.table_data.empty:
+    st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'])
+    st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
+    st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
 def export_to_html():
