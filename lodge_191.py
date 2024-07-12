@@ -51,6 +51,16 @@ def add_row():
     except Exception as e:
         st.error(f"Error adding row to {DATA_FILE}: {e}")
 
+# Function to update a row in the table and save to CSV
+def update_row(index, updated_row):
+    try:
+        df = pd.read_csv(DATA_FILE)
+        df.loc[index] = updated_row
+        df.to_csv(DATA_FILE, index=False)
+        st.session_state.table_data = load_data()
+    except Exception as e:
+        st.error(f"Error updating row in {DATA_FILE}: {e}")
+
 # Add title with emojis
 st.title("191 Lodge List 😊🛂")
 
@@ -58,18 +68,43 @@ st.title("191 Lodge List 😊🛂")
 if 'table_data' not in st.session_state:
     st.session_state.table_data = load_data()
 
-# Input form for adding new rows
+# Input form for adding or updating rows
 with st.form(key='input_form'):
     st.text_input("Name", key="name")
     st.text_input("Occupation", key="occupation")
     st.date_input("Lodge Date", key="lodge_date", value=datetime.today())
     st.text_area("Comments", key="comments")
-    submit_button = st.form_submit_button(label='Add Row', on_click=add_row)
+    submit_button = st.form_submit_button(label='Add/Update Row')
+
+    # If a row is selected for editing
+    if 'edit_index' in st.session_state:
+        st.write("### Editing Row")
+        st.write(st.session_state.table_data.loc[st.session_state.edit_index])
+        st.session_state.name = st.session_state.table_data.loc[st.session_state.edit_index, 'Name']
+        st.session_state.occupation = st.session_state.table_data.loc[st.session_state.edit_index, 'Occupation']
+        st.session_state.lodge_date = st.session_state.table_data.loc[st.session_state.edit_index, 'Lodge Date']
+        st.session_state.comments = st.session_state.table_data.loc[st.session_state.edit_index, 'Comments']
+        if st.button("Clear Edit"):
+            del st.session_state['edit_index']
+    else:
+        if submit_button:
+            add_row()
 
 # Display the table with formatted date
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
     st.dataframe(st.session_state.table_data)
+
+    # Buttons for editing and deleting rows
+    st.write("### Actions")
+    for index, row in st.session_state.table_data.iterrows():
+        if st.button(f"Edit Row {index + 1}"):
+            st.session_state.edit_index = index
+        if st.button(f"Delete Row {index + 1}"):
+            df = pd.read_csv(DATA_FILE)
+            df = df.drop(index)
+            df.to_csv(DATA_FILE, index=False)
+            st.session_state.table_data = load_data()
 
 # Function to export table to HTML
 def export_to_html():
