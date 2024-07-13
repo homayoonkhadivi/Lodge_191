@@ -62,8 +62,9 @@ with st.form(key='input_form'):
 # Display the table
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
-    st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'], format="%d %B %Y")
-    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: pd.NaT if x == 'None' else pd.to_datetime(x, format="%d %B %Y"))
+    # Format Lodge Date and Grant Date
+    st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'], errors='coerce').dt.strftime("%d %B %Y")
+    st.session_state.table_data['Grant Date'] = pd.to_datetime(st.session_state.table_data['Grant Date'], errors='coerce').apply(lambda x: 'None' if pd.isna(x) else x.strftime("%d %B %Y"))
     st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
