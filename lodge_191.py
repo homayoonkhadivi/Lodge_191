@@ -30,7 +30,7 @@ def add_row():
             "Name": [st.session_state.name],
             "Occupation": [st.session_state.occupation],
             "Lodge Date": [lodge_date.strftime("%d %B %Y")],
-            "Grant Date": [grant_date.strftime("%d %B %Y") if grant_date else 'None'],
+            "Grant Date": [grant_date.strftime("%d %B %Y") if grant_date else None],
             "Comments": [st.session_state.comments]
         })
         # Append new row to CSV file
@@ -66,9 +66,9 @@ with st.form(key='input_form'):
 # Display the table
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
-    # Format Lodge Date and Grant Date
+    # Convert Lodge Date and Grant Date to datetime objects
     st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'], errors='coerce').dt.strftime("%d %B %Y")
-    st.session_state.table_data['Grant Date'] = pd.to_datetime(st.session_state.table_data['Grant Date'], errors='coerce').apply(lambda x: 'None' if pd.isna(x) else x.strftime("%d %B %Y"))
+    st.session_state.table_data['Grant Date'] = pd.to_datetime(st.session_state.table_data['Grant Date'], errors='coerce').dt.strftime("%d %B %Y")
     st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
