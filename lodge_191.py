@@ -14,7 +14,6 @@ def init_data_storage():
     df.to_csv(DATA_FILE, index=False)
 
 # Load data from CSV file with error handling
-@st.cache_data
 def load_data():
     try:
         if os.path.exists(DATA_FILE):
