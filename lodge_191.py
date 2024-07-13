@@ -8,20 +8,20 @@ DATA_FILE = "data.csv"
 
 # Function to initialize data storage
 def init_data_storage():
-    if os.path.exists(DATA_FILE):
-        os.remove(DATA_FILE)  # Remove existing file if it exists
-    df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
-    df.to_csv(DATA_FILE, index=False)
+    if not os.path.exists(DATA_FILE):
+        df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
+        df.to_csv(DATA_FILE, index=False)
+    else:
+        df = pd.read_csv(DATA_FILE)
+        if 'Grant Date' not in df.columns:
+            df['Grant Date'] = pd.NaT
+            df.to_csv(DATA_FILE, index=False)
 
 # Load data from CSV file with error handling
 def load_data():
     try:
         if os.path.exists(DATA_FILE):
             df = pd.read_csv(DATA_FILE, parse_dates=['Lodge Date', 'Grant Date'], infer_datetime_format=True)
-            if 'Lodge Date' in df.columns:
-                df['Lodge Date'] = pd.to_datetime(df['Lodge Date'], errors='coerce')
-            if 'Grant Date' in df.columns:
-                df['Grant Date'] = pd.to_datetime(df['Grant Date'], errors='coerce')
             return df
         else:
             st.warning(f"No data found in {DATA_FILE}.")
@@ -72,10 +72,13 @@ with st.form(key='input_form'):
 # Display the table
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
-    # Format Lodge Date to day month year
-    st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
+    # Format Lodge Date to display as "day month year"
+    st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'])
+    st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%d %B %Y")
     # Show 'None' for Grant Date if it's NaT (not a valid datetime)
-    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x)
+    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x.strftime("%d %B %Y"))
+
+    # Display the table
     st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
