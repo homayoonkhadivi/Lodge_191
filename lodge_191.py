@@ -3,30 +3,20 @@ import pandas as pd
 from datetime import datetime
 import os
 
-# File path for storing data (this will only work locally, not on Streamlit sharing)
+# File path for storing data (this will only work locally, for deployment on Streamlit Cloud, this would need to be changed)
 DATA_FILE = "data.csv"
 
-# Initialize data storage if necessary
+# Function to initialize data storage
 def init_data_storage():
     if not os.path.exists(DATA_FILE):
         df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
         df.to_csv(DATA_FILE, index=False)
-    else:
-        df = pd.read_csv(DATA_FILE)
-        if 'Grant Date' not in df.columns:
-            df['Grant Date'] = pd.NaT
-            df.to_csv(DATA_FILE, index=False)
 
-# Load data from CSV file with error handling
+# Load data from CSV file
 @st.cache_data
 def load_data():
     try:
-        if os.path.exists(DATA_FILE):
-            df = pd.read_csv(DATA_FILE, parse_dates=['Lodge Date', 'Grant Date'], infer_datetime_format=True)
-            return df
-        else:
-            st.warning(f"No data found in {DATA_FILE}.")
-            return pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
+        return pd.read_csv(DATA_FILE)
     except Exception as e:
         st.error(f"Error loading data from {DATA_FILE}: {e}")
         return pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
@@ -39,21 +29,21 @@ def add_row():
         new_row = pd.DataFrame({
             "Name": [st.session_state.name],
             "Occupation": [st.session_state.occupation],
-            "Lodge Date": [lodge_date],
-            "Grant Date": [grant_date],
+            "Lodge Date": [lodge_date.strftime("%d %B %Y")],
+            "Grant Date": [grant_date.strftime("%d %B %Y") if grant_date else 'None'],
             "Comments": [st.session_state.comments]
         })
-        # Append new row to the cached data
-        st.session_state.table_data = pd.concat([st.session_state.table_data, new_row], ignore_index=True)
-        # Save the updated data to CSV
-        st.session_state.table_data.to_csv(DATA_FILE, index=False)
+        # Append new row to CSV file
+        new_row.to_csv(DATA_FILE, mode='a', header=not os.path.exists(DATA_FILE), index=False)
+        # Update session state data
+        st.session_state.table_data = load_data()
     except Exception as e:
         st.error(f"Error adding row to {DATA_FILE}: {e}")
 
 # Add title with emojis
 st.title("191 Lodge List 😊🛂")
 
-# Initialize data storage if necessary
+# Initialize data storage
 init_data_storage()
 
 # Initialize session state to store table data
@@ -72,13 +62,8 @@ with st.form(key='input_form'):
 # Display the table
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
-    # Format Lodge Date to display as "day month year"
-    st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'])
-    st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%d %B %Y")
-    # Show 'None' for Grant Date if it's NaT (not a valid datetime)
-    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x.strftime("%d %B %Y"))
-
-    # Display the table
+    st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'], format="%d %B %Y")
+    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: pd.NaT if x == 'None' else pd.to_datetime(x, format="%d %B %Y"))
     st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
