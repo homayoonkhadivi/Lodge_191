@@ -3,10 +3,10 @@ import pandas as pd
 from datetime import datetime
 import os
 
-# File path for storing data
+# File path for storing data (this will only work locally, not on Streamlit sharing)
 DATA_FILE = "data.csv"
 
-# Function to initialize data storage
+# Initialize data storage if necessary
 def init_data_storage():
     if not os.path.exists(DATA_FILE):
         df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
@@ -18,6 +18,7 @@ def init_data_storage():
             df.to_csv(DATA_FILE, index=False)
 
 # Load data from CSV file with error handling
+@st.cache_data
 def load_data():
     try:
         if os.path.exists(DATA_FILE):
@@ -42,10 +43,10 @@ def add_row():
             "Grant Date": [grant_date],
             "Comments": [st.session_state.comments]
         })
-        # Append new row to CSV file
-        new_row.to_csv(DATA_FILE, mode='a', header=not os.path.exists(DATA_FILE), index=False)
-        # Update session state data
-        st.session_state.table_data = load_data()
+        # Append new row to the cached data
+        st.session_state.table_data = pd.concat([st.session_state.table_data, new_row], ignore_index=True)
+        # Save the updated data to CSV
+        st.session_state.table_data.to_csv(DATA_FILE, index=False)
     except Exception as e:
         st.error(f"Error adding row to {DATA_FILE}: {e}")
 
@@ -53,8 +54,7 @@ def add_row():
 st.title("191 Lodge List 😊🛂")
 
 # Initialize data storage if necessary
-if not os.path.exists(DATA_FILE):
-    init_data_storage()
+init_data_storage()
 
 # Initialize session state to store table data
 if 'table_data' not in st.session_state:
