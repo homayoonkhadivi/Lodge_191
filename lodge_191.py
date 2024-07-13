@@ -3,20 +3,30 @@ import pandas as pd
 from datetime import datetime
 import os
 
-# File path for storing data (this will only work locally, for deployment on Streamlit Cloud, this would need to be changed)
+# File path for storing data
 DATA_FILE = "data.csv"
 
 # Function to initialize data storage
 def init_data_storage():
-    if not os.path.exists(DATA_FILE):
-        df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
-        df.to_csv(DATA_FILE, index=False)
+    if os.path.exists(DATA_FILE):
+        os.remove(DATA_FILE)  # Remove existing file if it exists
+    df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
+    df.to_csv(DATA_FILE, index=False)
 
-# Load data from CSV file
+# Load data from CSV file with error handling
 @st.cache_data
 def load_data():
     try:
-        return pd.read_csv(DATA_FILE)
+        if os.path.exists(DATA_FILE):
+            df = pd.read_csv(DATA_FILE, parse_dates=['Lodge Date', 'Grant Date'], infer_datetime_format=True)
+            if 'Lodge Date' in df.columns:
+                df['Lodge Date'] = pd.to_datetime(df['Lodge Date'], errors='coerce')
+            if 'Grant Date' in df.columns:
+                df['Grant Date'] = pd.to_datetime(df['Grant Date'], errors='coerce')
+            return df
+        else:
+            st.warning(f"No data found in {DATA_FILE}.")
+            return pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
     except Exception as e:
         st.error(f"Error loading data from {DATA_FILE}: {e}")
         return pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
@@ -29,26 +39,23 @@ def add_row():
         new_row = pd.DataFrame({
             "Name": [st.session_state.name],
             "Occupation": [st.session_state.occupation],
-            "Lodge Date": [lodge_date.strftime("%d %B %Y")],
-            "Grant Date": [grant_date.strftime("%d %B %Y") if grant_date else None],
+            "Lodge Date": [lodge_date],
+            "Grant Date": [grant_date],
             "Comments": [st.session_state.comments]
         })
         # Append new row to CSV file
-        if not os.path.exists(DATA_FILE):
-            new_row.to_csv(DATA_FILE, index=False)
-        else:
-            new_row.to_csv(DATA_FILE, mode='a', header=False, index=False)
+        new_row.to_csv(DATA_FILE, mode='a', header=not os.path.exists(DATA_FILE), index=False)
         # Update session state data
         st.session_state.table_data = load_data()
-        st.success("Row added successfully!")
     except Exception as e:
         st.error(f"Error adding row to {DATA_FILE}: {e}")
 
 # Add title with emojis
 st.title("191 Lodge List 😊🛂")
 
-# Initialize data storage
-init_data_storage()
+# Initialize data storage if necessary
+if not os.path.exists(DATA_FILE):
+    init_data_storage()
 
 # Initialize session state to store table data
 if 'table_data' not in st.session_state:
@@ -66,9 +73,10 @@ with st.form(key='input_form'):
 # Display the table
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
-    # Convert Lodge Date and Grant Date to datetime objects
-    st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'], errors='coerce').dt.strftime("%d %B %Y")
-    st.session_state.table_data['Grant Date'] = pd.to_datetime(st.session_state.table_data['Grant Date'], errors='coerce').dt.strftime("%d %B %Y")
+    # Format Lodge Date to day month year
+    st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
+    # Show 'None' for Grant Date if it's NaT (not a valid datetime)
+    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x)
     st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
