@@ -34,9 +34,13 @@ def add_row():
             "Comments": [st.session_state.comments]
         })
         # Append new row to CSV file
-        new_row.to_csv(DATA_FILE, mode='a', header=not os.path.exists(DATA_FILE), index=False)
+        if not os.path.exists(DATA_FILE):
+            new_row.to_csv(DATA_FILE, index=False)
+        else:
+            new_row.to_csv(DATA_FILE, mode='a', header=False, index=False)
         # Update session state data
         st.session_state.table_data = load_data()
+        st.success("Row added successfully!")
     except Exception as e:
         st.error(f"Error adding row to {DATA_FILE}: {e}")
 
