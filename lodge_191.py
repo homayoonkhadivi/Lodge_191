@@ -73,9 +73,13 @@ if not st.session_state.table_data.empty:
     # Ensure proper handling of NaT in dates
     st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'], errors='coerce')
     st.session_state.table_data['Grant Date'] = pd.to_datetime(st.session_state.table_data['Grant Date'], errors='coerce')
-    st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
-    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x.strftime("%A, %B %d, %Y"))
-    st.dataframe(st.session_state.table_data)
+    
+    # Create a copy of the table for display
+    display_table = st.session_state.table_data.copy()
+    display_table['Lodge Date'] = display_table['Lodge Date'].dt.strftime("%A, %B %d, %Y")
+    display_table['Grant Date'] = display_table['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x.strftime("%A, %B %d, %Y"))
+    
+    st.dataframe(display_table)
 
 # Function to export table to HTML
 def export_to_html():
