@@ -17,10 +17,8 @@ def load_data():
     try:
         if os.path.exists(DATA_FILE):
             df = pd.read_csv(DATA_FILE, parse_dates=['Lodge Date', 'Grant Date'], infer_datetime_format=True)
-            if 'Lodge Date' in df.columns:
-                df['Lodge Date'] = pd.to_datetime(df['Lodge Date'], errors='coerce')
-            if 'Grant Date' in df.columns:
-                df['Grant Date'] = pd.to_datetime(df['Grant Date'], errors='coerce')
+            df['Lodge Date'] = pd.to_datetime(df['Lodge Date'], errors='coerce')
+            df['Grant Date'] = pd.to_datetime(df['Grant Date'], errors='coerce')
             return df
         else:
             st.warning(f"No data found in {DATA_FILE}.")
@@ -72,10 +70,9 @@ with st.form(key='input_form'):
 # Display the table
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
-    # Format Lodge Date to day month year
+    # Ensure proper handling of NaT in dates
     st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
-    # Show 'None' for Grant Date if it's NaT (not a valid datetime)
-    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x)
+    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x.strftime("%A, %B %d, %Y"))
     st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
