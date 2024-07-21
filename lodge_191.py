@@ -8,18 +8,20 @@ DATA_FILE = "data.csv"
 
 # Function to initialize data storage
 def init_data_storage():
-    if not os.path.exists(DATA_FILE):
-        df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
-        df.to_csv(DATA_FILE, index=False)
+    if os.path.exists(DATA_FILE):
+        os.remove(DATA_FILE)  # Remove existing file if it exists
+    df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
+    df.to_csv(DATA_FILE, index=False)
 
 # Load data from CSV file with error handling
-@st.cache_data
 def load_data():
     try:
         if os.path.exists(DATA_FILE):
             df = pd.read_csv(DATA_FILE, parse_dates=['Lodge Date', 'Grant Date'], infer_datetime_format=True)
-            df['Lodge Date'] = pd.to_datetime(df['Lodge Date'], errors='coerce')
-            df['Grant Date'] = pd.to_datetime(df['Grant Date'], errors='coerce')
+            if 'Lodge Date' in df.columns:
+                df['Lodge Date'] = pd.to_datetime(df['Lodge Date'], errors='coerce')
+            if 'Grant Date' in df.columns:
+                df['Grant Date'] = pd.to_datetime(df['Grant Date'], errors='coerce')
             return df
         else:
             st.warning(f"No data found in {DATA_FILE}.")
@@ -40,14 +42,10 @@ def add_row():
             "Grant Date": [grant_date],
             "Comments": [st.session_state.comments]
         })
-        # Append new row to existing data and save to CSV file
-        existing_data = load_data()
-        updated_data = pd.concat([existing_data, new_row], ignore_index=True)
-        updated_data.to_csv(DATA_FILE, index=False)
+        # Append new row to CSV file
+        new_row.to_csv(DATA_FILE, mode='a', header=not os.path.exists(DATA_FILE), index=False)
         # Update session state data
-        st.session_state.table_data = updated_data
-        # Clear the cache to reload data
-        load_data.clear()
+        st.session_state.table_data = load_data()
     except Exception as e:
         st.error(f"Error adding row to {DATA_FILE}: {e}")
 
@@ -55,7 +53,8 @@ def add_row():
 st.title("191 Lodge List 😊🛂")
 
 # Initialize data storage if necessary
-init_data_storage()
+if not os.path.exists(DATA_FILE):
+    init_data_storage()
 
 # Initialize session state to store table data
 if 'table_data' not in st.session_state:
@@ -73,14 +72,11 @@ with st.form(key='input_form'):
 # Display the table
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
-    # Create a copy of the table for display
-    display_table = st.session_state.table_data.copy()
-    try:
-        display_table['Lodge Date'] = display_table['Lodge Date'].dt.strftime("%A, %B %d, %Y")
-        display_table['Grant Date'] = display_table['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x.strftime("%A, %B %d, %Y"))
-    except AttributeError:
-        st.error("Error: One or more date columns contain non-datetime values.")
-    st.dataframe(display_table)
+    # Format Lodge Date to day month year
+    st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
+    # Show 'None' for Grant Date if it's NaT (not a valid datetime)
+    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x)
+    st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
 def export_to_html():
