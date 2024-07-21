@@ -71,6 +71,8 @@ with st.form(key='input_form'):
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
     # Ensure proper handling of NaT in dates
+    st.session_state.table_data['Lodge Date'] = pd.to_datetime(st.session_state.table_data['Lodge Date'], errors='coerce')
+    st.session_state.table_data['Grant Date'] = pd.to_datetime(st.session_state.table_data['Grant Date'], errors='coerce')
     st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
     st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x.strftime("%A, %B %d, %Y"))
     st.dataframe(st.session_state.table_data)
