@@ -75,8 +75,11 @@ st.write("### Current Table")
 if not st.session_state.table_data.empty:
     # Create a copy of the table for display
     display_table = st.session_state.table_data.copy()
-    display_table['Lodge Date'] = display_table['Lodge Date'].dt.strftime("%A, %B %d, %Y")
-    display_table['Grant Date'] = display_table['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x.strftime("%A, %B %d, %Y"))
+    try:
+        display_table['Lodge Date'] = display_table['Lodge Date'].dt.strftime("%A, %B %d, %Y")
+        display_table['Grant Date'] = display_table['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x.strftime("%A, %B %d, %Y"))
+    except AttributeError:
+        st.error("Error: One or more date columns contain non-datetime values.")
     st.dataframe(display_table)
 
 # Function to export table to HTML
