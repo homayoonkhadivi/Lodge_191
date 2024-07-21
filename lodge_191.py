@@ -70,10 +70,14 @@ with st.form(key='input_form'):
 # Display the table
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
+    # Debugging: Show the raw data in the DataFrame
+    st.write(st.session_state.table_data.head())
+
     # Format Lodge Date to day month year
     st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
     # Show 'None' for Grant Date if it's NaT (not a valid datetime)
-    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x)
+    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x.strftime("%A, %B %d, %Y"))
+
     st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
