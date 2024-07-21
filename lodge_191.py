@@ -8,10 +8,9 @@ DATA_FILE = "data.csv"
 
 # Function to initialize data storage
 def init_data_storage():
-    if os.path.exists(DATA_FILE):
-        os.remove(DATA_FILE)  # Remove existing file if it exists
-    df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
-    df.to_csv(DATA_FILE, index=False)
+    if not os.path.exists(DATA_FILE):
+        df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
+        df.to_csv(DATA_FILE, index=False)
 
 # Load data from CSV file with error handling
 def load_data():
@@ -42,10 +41,12 @@ def add_row():
             "Grant Date": [grant_date],
             "Comments": [st.session_state.comments]
         })
-        # Append new row to CSV file
-        new_row.to_csv(DATA_FILE, mode='a', header=not os.path.exists(DATA_FILE), index=False)
+        # Append new row to existing data and save to CSV file
+        existing_data = load_data()
+        updated_data = pd.concat([existing_data, new_row], ignore_index=True)
+        updated_data.to_csv(DATA_FILE, index=False)
         # Update session state data
-        st.session_state.table_data = load_data()
+        st.session_state.table_data = updated_data
     except Exception as e:
         st.error(f"Error adding row to {DATA_FILE}: {e}")
 
@@ -53,8 +54,7 @@ def add_row():
 st.title("191 Lodge List 😊🛂")
 
 # Initialize data storage if necessary
-if not os.path.exists(DATA_FILE):
-    init_data_storage()
+init_data_storage()
 
 # Initialize session state to store table data
 if 'table_data' not in st.session_state:
