@@ -8,9 +8,10 @@ DATA_FILE = "data.csv"
 
 # Function to initialize data storage
 def init_data_storage():
-    if not os.path.exists(DATA_FILE):
-        df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
-        df.to_csv(DATA_FILE, index=False)
+    if os.path.exists(DATA_FILE):
+        os.remove(DATA_FILE)  # Remove existing file if it exists
+    df = pd.DataFrame(columns=["Name", "Occupation", "Lodge Date", "Grant Date", "Comments"])
+    df.to_csv(DATA_FILE, index=False)
 
 # Load data from CSV file with error handling
 def load_data():
@@ -52,7 +53,8 @@ def add_row():
 st.title("191 Lodge List 😊🛂")
 
 # Initialize data storage if necessary
-init_data_storage()
+if not os.path.exists(DATA_FILE):
+    init_data_storage()
 
 # Initialize session state to store table data
 if 'table_data' not in st.session_state:
@@ -70,14 +72,10 @@ with st.form(key='input_form'):
 # Display the table
 st.write("### Current Table")
 if not st.session_state.table_data.empty:
-    # Debugging: Show the raw data in the DataFrame
-    st.write(st.session_state.table_data.head())
-
     # Format Lodge Date to day month year
     st.session_state.table_data['Lodge Date'] = st.session_state.table_data['Lodge Date'].dt.strftime("%A, %B %d, %Y")
     # Show 'None' for Grant Date if it's NaT (not a valid datetime)
-    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x.strftime("%A, %B %d, %Y"))
-
+    st.session_state.table_data['Grant Date'] = st.session_state.table_data['Grant Date'].apply(lambda x: 'None' if pd.isna(x) else x)
     st.dataframe(st.session_state.table_data)
 
 # Function to export table to HTML
